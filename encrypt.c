@@ -44,6 +44,10 @@
 
 typedef unsigned char byte;
 
+/* Nothing is static here; we need to access interior functions for
+ * test vectors. */
+#define static
+
 /* ------------------------------------------------------------------------- */
 
 static void write32_big_endian(unsigned x, void *ptr) {
