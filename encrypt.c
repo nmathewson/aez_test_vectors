@@ -41,7 +41,6 @@
 /* access to AES4 and AES10, and allows the forcing of MixColumns in the     */
 /* final round. It also defines "u32", used for internal AES keys.           */
 #include "rijndael-alg-fst.h"
-#include "crypto_aead.h"
 
 typedef unsigned char byte;
 

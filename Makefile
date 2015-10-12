@@ -16,9 +16,13 @@ OBJ = blake2b.o encrypt.o rijndael-alg-fst.o tv.o
 all: test_vectors tv
 
 test_vectors: tv
+	./tv > test_vectors
 
 tv: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o tv
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) tv test_vectors
