@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <assert.h>
 
+#ifdef __linux__
+#include <bsd/stdlib.h>
+#endif
+
 typedef unsigned char u8;
 typedef unsigned char byte;
 
