@@ -1,10 +1,10 @@
 /*
-// AEZ v4.1 reference code. AEZ info: http://www.cs.ucdavis.edu/~rogaway/aez
+// AEZ v5 reference code. AEZ info: http://www.cs.ucdavis.edu/~rogaway/aez
 //
 // ** This version is slow and susceptible to side-channel attacks. **
 // ** Do not use for any purpose other than to understand AEZ.      **
 //
-// Written by Ted Krovetz (ted@krovetz.net). Last modified 13 September 2015.
+// Written by Ted Krovetz (ted@krovetz.net). Last modified 21 March 2017.
 //
 // This is free and unencumbered software released into the public domain.
 //
@@ -119,42 +119,22 @@ static void E(byte *K, unsigned kbytes, int j, unsigned i,
         memcpy((byte*)aes_key+ 64, (byte*)aes_key+16, 48);     /* I J L    */
         memcpy((byte*)aes_key+112, (byte*)aes_key+16, 48);     /* I J L    */
         memcpy((byte*)aes_key+160, (byte*)aes_key+16, 16);     /* I        */
-        mult_block(i,J,buf); xor_bytes(buf,src,16,buf);
+        mult_block(i,L,delta); xor_bytes(delta,src,16,buf);
         rijndaelEncryptRound(aes_key, 99, buf, 10); /*incl final MixColumns*/
     } else {
         u32 aes4_key[4*5];
 	    memset(aes4_key,0,16);
-        if (j==2) {
-        	memcpy((byte*)aes4_key+16, L, 16);
-        	memcpy((byte*)aes4_key+32, I, 16);
-        	memcpy((byte*)aes4_key+48, J, 16);
-        	memcpy((byte*)aes4_key+64, L, 16);
-        } else {
-        	memcpy((byte*)aes4_key+16, J, 16);
-        	memcpy((byte*)aes4_key+32, I, 16);
-        	memcpy((byte*)aes4_key+48, L, 16);
-	        memset((byte*)aes4_key+64,0,16);
-        }
-        correct_key(aes4_key+4,4*16);
-        if (j==0) {
-        	mult_block(i,I,buf); xor_bytes(buf, src, 16, buf);
-        	rijndaelEncryptRound(aes4_key, 99, buf, 4);
-        } else if (j==1 || j==2) {
-        	mult_block((1<<(3+(i-1)/8))+(i-1)%8,I,buf);
-        	xor_bytes(buf, src, 16, buf);
-        	rijndaelEncryptRound(aes4_key, 99, buf, 4);
-        } else if (j>=3 && i==0) {
-        	mult_block(1<<(j-3),L,delta); xor_bytes(delta, src, 16, buf);
-        	rijndaelEncryptRound(aes4_key, 99, buf, 4);
-        	xor_bytes(buf, delta, 16, buf);
-        } else {
-        	mult_block(1<<(j-3),L,buf);
-        	mult_block((1<<(3+(i-1)/8))+(i-1)%8,J,delta);
-        	xor_bytes(delta, buf, 16, delta);
-        	xor_bytes(src, delta, 16, buf);
-        	rijndaelEncryptRound(aes4_key, 99, buf, 4);
-        	xor_bytes(buf, delta, 16, buf);
-        }
+        memcpy((byte*)aes4_key+16, J, 16);
+      	memcpy((byte*)aes4_key+32, I, 16);
+       	memcpy((byte*)aes4_key+48, L, 16);
+        memset((byte*)aes4_key+64,0,16);
+        correct_key(aes4_key+4,3*16);
+        mult_block(j,J,delta);
+        mult_block(i%8,L,buf); xor_bytes(delta, buf, 16, delta);
+        for (i=(i+7)/8; i>0; i--) mult_block(2,I,I);
+        xor_bytes(delta, I, 16, delta);
+        xor_bytes(delta, src, 16, buf);
+        rijndaelEncryptRound(aes4_key, 99, buf, 4);
     }
     memcpy(dst, buf, 16);
 }
@@ -439,7 +419,7 @@ int crypto_aead_encrypt(
     unsigned adbytes[] = {(unsigned)adlen};
     (void)nsec;
     if (clen) *clen = mlen+16;
-    Encrypt((byte*)k, 16, (byte*)npub, 12, AD,
+    Encrypt((byte*)k, 48, (byte*)npub, 12, AD,
                 adbytes, 1, 16, (byte*)m, mlen, (byte*)c);
     return 0;
 }
@@ -457,7 +437,7 @@ int crypto_aead_decrypt(
     unsigned adbytes[] = {(unsigned)adlen};
     (void)nsec;
     if (mlen) *mlen = clen-16;
-    return Decrypt((byte*)k, 16, (byte*)npub, 12, AD,
+    return Decrypt((byte*)k, 48, (byte*)npub, 12, AD,
                     adbytes, 1, 16, (byte*)c, clen, (byte*)m);
 }
 
