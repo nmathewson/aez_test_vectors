@@ -19,10 +19,10 @@ test_vectors: tv
 	./tv > test_vectors
 
 tv: $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o tv
+	$(CC) $(CFLAGS) $(OBJ) -o tv -lbsd
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) tv test_vectors
+	rm -f $(OBJ) tv test_vectors
